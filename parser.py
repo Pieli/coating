@@ -5,132 +5,97 @@ from bs4 import BeautifulSoup
 
 # TODO add dependencies bs4, python-lxml
 
-
-# TODO
-# - find all tags
-# if no tags -> all words are tags
-# - for tag memorize position
-# - change view
-# - render
-
-# lines stay on lines
-# adjust lines after each iteration -> tags before number corrigate the rest
-
-import re
+mapping = {}
 
 
-def lexer(text):
-    # Define the regular expressions for each token
-    token_specification = [
-        ("NUMBER", r"\d+(\.\d+)?"),  # Integer or decimal number
-        ("PLUS", r"\+"),  # Plus sign
-        ("MINUS", r"-"),  # Minus sign
-        ("TIMES", r"\*"),  # Multiplication sign
-        ("DIVIDE", r"/"),  # Division sign
-        ("LPAREN", r"\("),  # Left parenthesis
-        ("RPAREN", r"\)"),  # Right parenthesis
-        ("SPACE", r"\s+"),  # Spaces
-    ]
-    tok_regex = "|".join("(?P<%s>%s)" % pair for pair in token_specification)
-    line_num = 1
-    line_start = 0
-    for mo in re.finditer(tok_regex, text):
-        kind = mo.lastgroup
-        value = mo.group()
-        if kind == "SPACE":
-            continue
-        column = mo.start() - line_start
-        yield Token(kind, value, line_num, column)
-        if kind == "NEWLINE":
-            line_start = mo.end()
-            line_num += 1
+class Position:
+    def __init__(self, line, column, length):
+        self.line = line
+        self.column = column
+        self.length = length
+        self.raw_position = None
+        self.tag = None
+
+    def __repr__(self):
+        return f"Position({self.line}, {self.column}, {self.length})"
 
 
-# test the lexer
-for token in lexer("1+2*(3-4)/5"):
-    print(token)
+def get_postions_for_tag(tags: iter) -> Position:
+    carry, last_line = 0, 0
 
+    for tag in tags:
+        line_nr = tag.sourceline - 1
 
-def get_postions_for_tag(soup, tag_name):
-    all_tags = soup.find_all(tag_name)
-    if not all_tags:
-        return False
+        if line_nr != last_line:
+            last_line = line_nr
+            carry = 0
 
-    mapping = {}
-    text_mod = text
-    print(repr(soup))
+        tag_prefix = tag.string.index(tag.string)
+        carry_new = len(str(tag)) - len(tag.string)
 
-    for tag in all_tags:
-        print(tag)
-        line_nr = tag.sourceline
-        print(
-            "Nr",
-            tag.sourceline,
-            tag.string,
+        result = Position(
+            line_nr, tag.sourcepos - 1 - tag_prefix - carry, len(tag.string)
         )
+        result.tag = tag
+        result.raw_position = Position(line_nr, tag.sourcepos - 1, len(str(tag)))
 
-        tag_str = str(tag)
-        index_x_1 = text_mod.index(tag_str)
-        index_x_2 = len(tag_str)
+        carry += carry_new
 
-        print("unchanged", text_mod.splitlines())
-        print("changed", text_mod.splitlines()[line_nr].replace(tag_str, "hello"))
-
-        "\n".join(text_mod.splitlines()[line_nr].replace(tag_str, "hello"))
-
-    print(text_mod)
-
-    # Case that mapping is larger than one:
-    # if line_nr in mapping:
-    #     length_map = len(mapping[line_nr])
-    #     if length_map:
-    #         pass
-    #
+        yield result
 
 
-def adjust_other_tag_postions():
-    pass
-
-
-def get_all_tags(soup):
+def get_all_tags(soup: iter) -> list:
     return [tag.name for tag in soup.find_all() if tag.name not in ("html", "body")]
 
 
-def remove_p_tags_and_insert_text(html):
-    # draft
-    soup = BeautifulSoup(html, "html.parser")
-    for p in soup.find_all("p"):
-        p.replace_with(p.text)
-    return str(soup)
+def modify_tree(text: str, tags: iter) -> str:
+    global mapping
+    assert tags and hasattr(tags, "__iter__")
+
+    lines = text.splitlines(keepends=True)
+
+    for tag in get_postions_for_tag(tags):
+        line_nr = tag.raw_position.line
+        o_tag = tag.tag
+
+        assert o_tag is not None
+        assert str(o_tag) in lines[line_nr]
+
+        lines[line_nr] = lines[line_nr].replace(str(o_tag), o_tag.string)
+
+        del tag.raw_position, tag.tag
+
+        mapping.setdefault(line_nr, []).append(tag)
+        # carry = tag.length - len(str(o_tag))
+
+    return "".join(lines)
 
 
-text = """
-<html>
-<head>
-  <title>Example website</title>
-</head>
-<body>
-  <div>Hello</div>
-  <div>World</div>
-  <p>This is a paragraph</p>
-  <p>This is another paragraph</p>
-</body>
-</html>
-"""
+def tree_transform(text: str) -> str:
+    global mapping
+    assert text and type(text) is str
+
+    mapping = {}
+    soup = BeautifulSoup(text, "html.parser")
+
+    tags = soup.find_all()
+    if not tags:
+        print(f"No tags found")
+        exit(1)
+
+    return modify_tree(text, tags)
 
 
 if __name__ == "__main__":
     text = """
-            <a>test1</a>
+            <a>test1</a>__<a>test2</a>
+            ---<a>test2</a>
 
     <b>test3</b>
 
-    <a>test3</a>
-    """
+    <a>test3</a>"""
 
-    soup = BeautifulSoup(text, "html.parser", formatter=None)
+    new_text = tree_transform(text)
+    # print(new_text)
 
-    # modified_html = remove_p_tags_and_insert_text(text)
-    # print(modified_html)
-
-    get_postions_for_tag(soup, "a")
+    print(mapping)
