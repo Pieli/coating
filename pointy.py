@@ -1,4 +1,5 @@
 import os
+import argparse
 import curses
 from curses import wrapper
 
@@ -9,33 +10,60 @@ import parser
 os.environ["TERM"] = "xterm-1003"
 
 
-# 1. Parse regular expression (begin without)
-# 2. apply reg expression and calculate start + stop
-# 3. on click/hover loop through hash of line (start, stop, category)
-
-
 # TODO
-# ncurses scroll? -> start with fixed
-# draw in different colors
-
-TEXT = """
-AAA BBB
-ccc
-DDDD
-"""
-
-OUTPUT = ""
+# * make setup.py
+# * make readme.md
+# * draw in different colors
+# * whitespace if no tag is specified
+# * fix pipe to output
+# * ncurses scroll? -> start with fixed
 
 
-def draw_to_screen(text):
-    pass
-
-
-def split_draw(text):
-    pass
+INPUT = ""
+OUTPUT = None
+DEBUG = False
 
 
 def main():
+    global INPUT
+    global DEBUG
+
+    # command line arguments
+    parser = argparse.ArgumentParser(
+        description="Pointy - a ncurses based text editor",
+    )
+    parser.add_argument(
+        "-i",
+        "--input",
+        type=str,
+        help="input file",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="debug mode",
+    )
+
+    args = parser.parse_args()
+
+    if args.debug:
+        DEBUG = True
+
+    if args.input:
+        if args.input.strip() == "-":
+            import sys
+
+            text = sys.stdin.read()
+            INPUT = text
+
+        else:
+            if not os.path.isfile(args.input):
+                print(f"File '{args.input}' does not exist")
+                exit(1)
+
+            with open(args.input, "r") as f:
+                INPUT = f.read()
+
     wrapper(incurses)
 
     if OUTPUT:
@@ -43,8 +71,10 @@ def main():
 
 
 def incurses(stdscr):
+    global INPUT
     curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
-    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.use_default_colors()
 
     # hide cursor
     curses.curs_set(0)
@@ -54,26 +84,21 @@ def incurses(stdscr):
 
     # max window with from 0 to curses.COLS -1
     # max window height from 0 to curses.LINES -1
-
     # win = curses.newwin(5, 40, 7, 20)
 
-    # text = "<a>Hover on this text<a>"
-    x_text_start = 0
-    # x_text_end = len(text)
-    y_text = 0
-    # stdscr.addstr(0, 0, text)
+    # TODO remove later
+    if not INPUT:
+        text = """
 
-    # lines = {0: [(x_text_start, x_text_end, "category_1")]}
-    text = """
-            <a>test1</a>__<a>test2</a>
-            ---<a>test2</a>
+            Are you okay?
 
-    <b>test3</b>
-
-    <a>test3</a>"""
+        <a>[Yes]</a>           <a>[No]</a>
+        """
+    else:
+        text = INPUT
 
     new_text = parser.tree_transform(text)
-    lines = parser.mapping
+    lines = parser.MAPPING
 
     stdscr.addstr(0, 0, new_text)
     stdscr.refresh()
@@ -84,19 +109,18 @@ def incurses(stdscr):
 
         if key == curses.KEY_MOUSE:
             _, x, y, _, button = curses.getmouse()
-            # stdscr.addstr(10, 0, f"x, y, button = {x}, {y}, {button}")
+            if DEBUG:
+                stdscr.addstr(curses.LINES - 1, 0, f"x, y, button = {x}, {y}, {button}")
 
             for lin_nr, positions in lines.items():
                 line_text = new_text.splitlines(keepends=True)[lin_nr]
 
                 for position in positions:
-                    last_position = 0
-
                     start = position.column + 1
                     end = position.column + position.length
                     tex = line_text[start : end + 1]
 
-                    if x >= start and x <= end and y == lin_nr:
+                    if y == lin_nr and x >= start and x <= end:
                         stdscr.addnstr(
                             lin_nr,
                             start,

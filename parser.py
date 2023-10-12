@@ -2,10 +2,7 @@
 
 from bs4 import BeautifulSoup
 
-
-# TODO add dependencies bs4, python-lxml
-
-mapping = {}
+MAPPING = {}
 
 
 class Position:
@@ -49,7 +46,7 @@ def get_all_tags(soup: iter) -> list:
 
 
 def modify_tree(text: str, tags: iter) -> str:
-    global mapping
+    global MAPPING
     assert tags and hasattr(tags, "__iter__")
 
     lines = text.splitlines(keepends=True)
@@ -65,17 +62,17 @@ def modify_tree(text: str, tags: iter) -> str:
 
         del tag.raw_position, tag.tag
 
-        mapping.setdefault(line_nr, []).append(tag)
+        MAPPING.setdefault(line_nr, []).append(tag)
         # carry = tag.length - len(str(o_tag))
 
     return "".join(lines)
 
 
 def tree_transform(text: str) -> str:
-    global mapping
+    global MAPPING
     assert text and type(text) is str
 
-    mapping = {}
+    MAPPING = {}
     soup = BeautifulSoup(text, "html.parser")
 
     tags = soup.find_all()
@@ -98,4 +95,4 @@ if __name__ == "__main__":
     new_text = tree_transform(text)
     # print(new_text)
 
-    print(mapping)
+    print(MAPPING)
