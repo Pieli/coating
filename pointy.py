@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import argparse
 import curses
 from curses import wrapper
@@ -15,10 +16,6 @@ os.environ["TERM"] = "xterm-1003"
 # TODO
 # * make setup.py
 # * make readme.md
-# * draw in different colors
-# * whitespace if no tag is specified
-# * fix pipe to output
-# (* ncurses scroll? -> start with fixed)
 
 
 INPUT = ""
@@ -53,10 +50,11 @@ def main():
 
     if args.input:
         if args.input.strip() == "-":
-            import sys
-
             text = sys.stdin.read()
             INPUT = text
+
+            with open("/dev/tty") as f:
+                os.dup2(f.fileno(), 0)
 
         else:
             if not os.path.isfile(args.input):
