@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import argparse
 import curses
@@ -16,7 +18,7 @@ os.environ["TERM"] = "xterm-1003"
 # * draw in different colors
 # * whitespace if no tag is specified
 # * fix pipe to output
-# * ncurses scroll? -> start with fixed
+# (* ncurses scroll? -> start with fixed)
 
 
 INPUT = ""
@@ -63,7 +65,6 @@ def main():
 
             with open(args.input, "r") as f:
                 INPUT = f.read()
-
     wrapper(incurses)
 
     if OUTPUT:
@@ -82,10 +83,6 @@ def incurses(stdscr):
     # clear screen
     stdscr.clear()
 
-    # max window with from 0 to curses.COLS -1
-    # max window height from 0 to curses.LINES -1
-    # win = curses.newwin(5, 40, 7, 20)
-
     # TODO remove later
     if not INPUT:
         text = """
@@ -98,8 +95,8 @@ def incurses(stdscr):
         text = INPUT
 
     new_text = parser.tree_transform(text)
+    new_text_lines = new_text.splitlines(keepends=True)
     lines = parser.MAPPING
-
     stdscr.addstr(0, 0, new_text)
     stdscr.refresh()
 
@@ -113,12 +110,12 @@ def incurses(stdscr):
                 stdscr.addstr(curses.LINES - 1, 0, f"x, y, button = {x}, {y}, {button}")
 
             for lin_nr, positions in lines.items():
-                line_text = new_text.splitlines(keepends=True)[lin_nr]
+                line_text = new_text_lines[lin_nr]
 
                 for position in positions:
-                    start = position.column + 1
+                    start = position.column
                     end = position.column + position.length
-                    tex = line_text[start : end + 1]
+                    tex = line_text[start:end]
 
                     if y == lin_nr and x >= start and x <= end:
                         stdscr.addnstr(
@@ -135,7 +132,6 @@ def incurses(stdscr):
                             return
 
                     stdscr.refresh()
-
                 stdscr.refresh()
 
 

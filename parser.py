@@ -1,5 +1,6 @@
 #!/usr/env python3
 
+import re
 from bs4 import BeautifulSoup
 
 MAPPING = {}
@@ -30,15 +31,32 @@ def get_postions_for_tag(tags: iter) -> Position:
         tag_prefix = tag.string.index(tag.string)
         carry_new = len(str(tag)) - len(tag.string)
 
-        result = Position(
-            line_nr, tag.sourcepos - 1 - tag_prefix - carry, len(tag.string)
-        )
+        result = Position(line_nr, tag.sourcepos - tag_prefix - carry, len(tag.string))
         result.tag = tag
         result.raw_position = Position(line_nr, tag.sourcepos - 1, len(str(tag)))
 
         carry += carry_new
 
         yield result
+
+
+def lexer(text):
+    token_specification = [
+        ("ELEMENT", r"\S+"),
+        ("NEWLINE", r"\n"),
+    ]
+
+    tok_regex = "|".join("(?P<%s>%s)" % pair for pair in token_specification)
+    line_num = 0
+    line_start = 0
+    for mo in re.finditer(tok_regex, text):
+        kind = mo.lastgroup
+        value = mo.group()
+        column = mo.start() - line_start
+        yield Position(line_num, column, len(value))
+        if kind == "NEWLINE":
+            line_start = mo.end()
+            line_num += 1
 
 
 def get_all_tags(soup: iter) -> list:
@@ -58,12 +76,11 @@ def modify_tree(text: str, tags: iter) -> str:
         assert o_tag is not None
         assert str(o_tag) in lines[line_nr]
 
-        lines[line_nr] = lines[line_nr].replace(str(o_tag), o_tag.string)
+        lines[line_nr] = lines[line_nr].replace(str(o_tag), o_tag.string, 1)
 
         del tag.raw_position, tag.tag
 
         MAPPING.setdefault(line_nr, []).append(tag)
-        # carry = tag.length - len(str(o_tag))
 
     return "".join(lines)
 
@@ -77,22 +94,31 @@ def tree_transform(text: str) -> str:
 
     tags = soup.find_all()
     if not tags:
-        print(f"No tags found")
-        exit(1)
+        for token in lexer(text):
+            MAPPING.setdefault(token.line, []).append(token)
+        return text
 
     return modify_tree(text, tags)
 
 
 if __name__ == "__main__":
+    # text = """
+    #         <a>test1</a>__<a>test2</a>
+    #         ---<a>test2</a>
+
+    # <b>test3</b>
+
+    # <a>test3</a>"""
+
     text = """
-            <a>test1</a>__<a>test2</a>
-            ---<a>test2</a>
+    .rw-r--r--   61 papaya 13 Okt 00:12 requirements.txt
+    .rw-r--r--   72 papaya 13 Okt 00:46 testfile
+    drwxr-xr-x    - papaya 13 Okt 00:11 venv
+    """
 
-    <b>test3</b>
-
-    <a>test3</a>"""
-
-    new_text = tree_transform(text)
+    # new_text = tree_transform(text)
     # print(new_text)
+    # print(MAPPING)
 
-    print(MAPPING)
+    for token in lexer(text):
+        print(token)
