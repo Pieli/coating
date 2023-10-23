@@ -63,9 +63,14 @@ def main():
 
             with open(args.input, "r") as f:
                 INPUT = f.read()
+
+    stdout = os.dup(sys.stdout.fileno())
+    os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
+
     wrapper(incurses)
 
     if OUTPUT:
+        os.dup2(stdout, sys.stdout.fileno())
         print(OUTPUT)
 
 
@@ -107,29 +112,32 @@ def incurses(stdscr):
             if DEBUG:
                 stdscr.addstr(curses.LINES - 1, 0, f"x, y, button = {x}, {y}, {button}")
 
-            for lin_nr, positions in lines.items():
-                line_text = new_text_lines[lin_nr]
+            lin_nr = y
+            positions = lines.get(lin_nr)
+            if not positions:
+                continue
 
-                for position in positions:
-                    start = position.column
-                    end = position.column + position.length
-                    tex = line_text[start:end]
+            line_text = new_text_lines[lin_nr]
 
-                    if y == lin_nr and x >= start and x <= end:
-                        stdscr.addnstr(
-                            lin_nr,
-                            start,
-                            tex,
-                            position.length,
-                            curses.A_UNDERLINE,
-                        )
-                        stdscr.refresh()
-                        if button == curses.BUTTON1_CLICKED:
-                            global OUTPUT
-                            OUTPUT = tex
-                            return
+            for position in positions:
+                start = position.column
+                end = position.column + position.length
+                tex = line_text[start:end]
 
+                if x >= start and x <= end:
+                    stdscr.addnstr(
+                        lin_nr,
+                        start,
+                        tex,
+                        position.length,
+                        curses.A_UNDERLINE,
+                    )
                     stdscr.refresh()
+                    if button == curses.BUTTON1_CLICKED:
+                        global OUTPUT
+                        OUTPUT = tex
+                        return
+
                 stdscr.refresh()
 
 
