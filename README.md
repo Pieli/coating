@@ -1,8 +1,11 @@
 # Pointy
-
-Unix-philosophy experiement, with an interessting interface.
-
-Textbased appraoch.
+* A unix-philosophy experiement
+* Pointy enables interactive pipes 
 
 
 
+
+
+
+
+
