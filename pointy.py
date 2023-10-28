@@ -14,7 +14,6 @@ os.environ["TERM"] = "xterm-1003"
 
 
 # TODO
-# * handle scrolling
 # * make setup.py
 # * make readme.md
 
@@ -49,21 +48,22 @@ def main():
     if args.debug:
         DEBUG = True
 
-    if args.input:
-        if args.input.strip() == "-":
-            text = sys.stdin.read()
-            INPUT = text
+    if not args.input or args.input.strip() == "-":
+        text = sys.stdin.read()
+        INPUT = text
 
-            with open("/dev/tty") as f:
-                os.dup2(f.fileno(), 0)
+        with open("/dev/tty") as f:
+            os.dup2(f.fileno(), 0)
 
-        else:
-            if not os.path.isfile(args.input):
-                print(f"File '{args.input}' does not exist")
-                exit(1)
+    elif args.input:
+        if not os.path.isfile(args.input):
+            print(f"File '{args.input}' does not exist")
+            exit(1)
 
-            with open(args.input, "r") as f:
-                INPUT = f.read()
+        with open(args.input, "r") as f:
+            INPUT = f.read()
+    else:
+        pass
 
     stdout = os.dup(sys.stdout.fileno())
     os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
@@ -89,16 +89,7 @@ def incurses(stdscr):
     stdscr.scrollok(True)
     stdscr.clear()
 
-    # TODO remove later
-    if not INPUT:
-        text = """
-
-            Are you okay?
-
-        <a>[Yes]</a>           <a>[No]</a>
-        """
-    else:
-        text = INPUT
+    text = INPUT
 
     new_text = parser.tree_transform(text)
     new_text_lines = new_text.splitlines(keepends=True)
