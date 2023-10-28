@@ -3,9 +3,4 @@
 * Pointy enables interactive pipes 
 
 
-
-
-
-
-
-
+🦝
