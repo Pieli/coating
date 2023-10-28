@@ -45,30 +45,30 @@ def main():
 
     args = parser.parse_args()
 
-    if args.debug:
-        DEBUG = True
-
-    if not args.input or args.input.strip() == "-":
-        text = sys.stdin.read()
-        INPUT = text
-
-        with open("/dev/tty") as f:
-            os.dup2(f.fileno(), 0)
-
-    elif args.input:
-        if not os.path.isfile(args.input):
-            print(f"File '{args.input}' does not exist")
-            exit(1)
-
-        with open(args.input, "r") as f:
-            INPUT = f.read()
-    else:
-        pass
-
-    stdout = os.dup(sys.stdout.fileno())
-    os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
-
     try:
+        if args.debug:
+            DEBUG = True
+
+        if not args.input or args.input.strip() == "-":
+            text = sys.stdin.read()
+            INPUT = text
+
+            with open("/dev/tty") as f:
+                os.dup2(f.fileno(), 0)
+
+        elif args.input:
+            if not os.path.isfile(args.input):
+                print(f"File '{args.input}' does not exist")
+                exit(1)
+
+            with open(args.input, "r") as f:
+                INPUT = f.read()
+        else:
+            pass
+
+        stdout = os.dup(sys.stdout.fileno())
+        os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
+
         wrapper(incurses)
     except KeyboardInterrupt:
         exit(1)
