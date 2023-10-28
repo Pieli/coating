@@ -14,6 +14,7 @@ os.environ["TERM"] = "xterm-1003"
 
 
 # TODO
+# * handle scrolling
 # * make setup.py
 # * make readme.md
 
@@ -67,7 +68,10 @@ def main():
     stdout = os.dup(sys.stdout.fileno())
     os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
 
-    wrapper(incurses)
+    try:
+        wrapper(incurses)
+    except KeyboardInterrupt:
+        exit(1)
 
     if OUTPUT:
         os.dup2(stdout, sys.stdout.fileno())
@@ -82,8 +86,7 @@ def incurses(stdscr):
 
     # hide cursor
     curses.curs_set(0)
-
-    # clear screen
+    stdscr.scrollok(True)
     stdscr.clear()
 
     # TODO remove later
@@ -100,19 +103,62 @@ def incurses(stdscr):
     new_text = parser.tree_transform(text)
     new_text_lines = new_text.splitlines(keepends=True)
     lines = parser.MAPPING
-    stdscr.addstr(0, 0, new_text)
-    stdscr.refresh()
+
+    wh, window_width = stdscr.getmaxyx()
+    window_height = wh - 1 if DEBUG else wh
+
+    top_line = 0
+    last_line = top_line + window_height
+
+    # kinda hacky
+    def redraw_visual_text():
+        stdscr.addstr(0, 0, "".join(new_text_lines[top_line:last_line]))
+        stdscr.refresh()
+
+    redraw_visual_text()
 
     while True:
         key = stdscr.getch()
-        stdscr.addstr(0, 0, new_text)
+        last_line = min(top_line + window_height, len(new_text_lines))
+        redraw_visual_text()
+
+        if key == curses.KEY_DOWN:
+            if top_line < len(new_text_lines) - window_height:
+                top_line += 1
+                redraw_visual_text()
+            continue
+        elif key == curses.KEY_UP:
+            if top_line > 0:
+                top_line -= 1
+            continue
+        elif key == ord("q"):
+            break
 
         if key == curses.KEY_MOUSE:
-            _, x, y, _, button = curses.getmouse()
+            _, x, y, z, button = curses.getmouse()
             if DEBUG:
-                stdscr.addstr(curses.LINES - 1, 0, f"x, y, button = {x}, {y}, {button}")
+                stdscr.addstr(
+                    curses.LINES - 1,
+                    0,
+                    f"x, y, button = {x}, {y}, {z}, {button}, y_adj {y + top_line}",
+                )
 
-            lin_nr = y
+            lin_nr = y + top_line
+            if top_line < lin_nr > last_line:
+                continue
+
+            # scroll
+            if button == curses.BUTTON4_PRESSED:
+                if top_line > 0:
+                    top_line -= 1
+                continue
+
+            if button == curses.BUTTON5_PRESSED:
+                if top_line < len(new_text_lines) - window_height:
+                    top_line += 1
+                    redraw_visual_text()
+                continue
+
             positions = lines.get(lin_nr)
             if not positions:
                 continue
@@ -126,7 +172,7 @@ def incurses(stdscr):
 
                 if x >= start and x <= end:
                     stdscr.addnstr(
-                        lin_nr,
+                        y,
                         start,
                         tex,
                         position.length,
