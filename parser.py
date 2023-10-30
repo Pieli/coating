@@ -53,10 +53,11 @@ def lexer(text):
         kind = mo.lastgroup
         value = mo.group()
         column = mo.start() - line_start
-        yield Position(line_num, column, len(value))
         if kind == "NEWLINE":
             line_start = mo.end()
             line_num += 1
+            continue
+        yield Position(line_num, column, len(value))
 
 
 def get_all_tags(soup: iter) -> list:
@@ -89,6 +90,10 @@ def tree_transform(text: str) -> str:
     global MAPPING
     assert text and type(text) is str
 
+    # replace tabs with spaces
+    text = text.replace("\t", "     ")
+    # print(repr(text))
+
     MAPPING = {}
     soup = BeautifulSoup(text, "html.parser")
 
@@ -102,23 +107,26 @@ def tree_transform(text: str) -> str:
 
 
 if __name__ == "__main__":
-    # text = """
-    #         <a>test1</a>__<a>test2</a>
-    #         ---<a>test2</a>
+    try:
+        import sys
 
-    # <b>test3</b>
+        text = sys.stdin.read()
+    except KeyboardInterrupt:
+        exit()
 
-    # <a>test3</a>"""
+    if not text:
+        print("No input")
+        exit()
 
-    text = """
-    .rw-r--r--   61 papaya 13 Okt 00:12 requirements.txt
-    .rw-r--r--   72 papaya 13 Okt 00:46 testfile
-    drwxr-xr-x    - papaya 13 Okt 00:11 venv
-    """
+    print("Input text: ")
+    print(text)
 
-    # new_text = tree_transform(text)
-    # print(new_text)
-    # print(MAPPING)
+    new_text = tree_transform(text)
 
-    for token in lexer(text):
-        print(token)
+    print("Raw text: ")
+    print(repr(new_text), end="\n\n")
+
+    from pprint import pprint
+
+    pprint(MAPPING)
+    print()

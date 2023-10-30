@@ -12,12 +12,6 @@ import parser
 # Mouse position: run with TERM=xterm-1003
 os.environ["TERM"] = "xterm-1003"
 
-
-# TODO
-# * make setup.py
-# * make readme.md
-
-
 INPUT = ""
 OUTPUT = None
 DEBUG = False
@@ -80,6 +74,9 @@ def main():
 
 def incurses(stdscr):
     global INPUT
+    global OUTPUT
+    global DEBUG
+
     curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.use_default_colors()
@@ -89,9 +86,7 @@ def incurses(stdscr):
     stdscr.scrollok(True)
     stdscr.clear()
 
-    text = INPUT
-
-    new_text = parser.tree_transform(text)
+    new_text = parser.tree_transform(INPUT)
     new_text_lines = new_text.splitlines(keepends=True)
     lines = parser.MAPPING
 
@@ -107,6 +102,8 @@ def incurses(stdscr):
         stdscr.refresh()
 
     redraw_visual_text()
+
+    last_pos = None
 
     while True:
         key = stdscr.getch()
@@ -131,7 +128,7 @@ def incurses(stdscr):
                 stdscr.addstr(
                     curses.LINES - 1,
                     0,
-                    f"x, y, button = {x}, {y}, {z}, {button}, y_adj {y + top_line}",
+                    f"x,y,button={(x, y, button)}, y_adj={y + top_line}, {last_pos=}",
                 )
 
             lin_nr = y + top_line
@@ -151,8 +148,12 @@ def incurses(stdscr):
                 continue
 
             positions = lines.get(lin_nr)
+
             if not positions:
                 continue
+
+            if last_pos and last_pos.line == lin_nr:
+                positions.insert(0, last_pos)
 
             line_text = new_text_lines[lin_nr]
 
@@ -162,6 +163,8 @@ def incurses(stdscr):
                 tex = line_text[start:end]
 
                 if x >= start and x <= end:
+                    last_pos = position
+
                     stdscr.addnstr(
                         y,
                         start,
@@ -174,8 +177,7 @@ def incurses(stdscr):
                         global OUTPUT
                         OUTPUT = tex
                         return
-
-                stdscr.refresh()
+                    break
 
 
 if __name__ == "__main__":
