@@ -7,6 +7,7 @@ import curses
 from curses import wrapper
 
 import parser
+import itertools
 
 
 # Mouse position: run with TERM=xterm-1003
@@ -72,6 +73,18 @@ def main():
         print(OUTPUT)
 
 
+def debug_line_dec(stdscr):
+    global DEBUG
+
+    def wrapper(text):
+        if not DEBUG:
+            return
+        stdscr.addstr(curses.LINES - 1, 0, text)
+        stdscr.refresh()
+
+    return wrapper
+
+
 def incurses(stdscr):
     global INPUT
     global OUTPUT
@@ -80,6 +93,8 @@ def incurses(stdscr):
     curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.use_default_colors()
+
+    debug_line = debug_line_dec(stdscr)
 
     # hide cursor
     curses.curs_set(0)
@@ -108,7 +123,6 @@ def incurses(stdscr):
     while True:
         key = stdscr.getch()
         last_line = min(top_line + window_height, len(new_text_lines))
-        redraw_visual_text()
 
         if key == curses.KEY_DOWN:
             if top_line < len(new_text_lines) - window_height:
@@ -124,23 +138,19 @@ def incurses(stdscr):
 
         if key == curses.KEY_MOUSE:
             _, x, y, z, button = curses.getmouse()
-            if DEBUG:
-                stdscr.addstr(
-                    curses.LINES - 1,
-                    0,
-                    f"x,y,button={(x, y, button)}, y_adj={y + top_line}, {last_pos=}",
-                )
+            debug_line(f"x,y,button={(x, y, button)}, {last_pos=}")
 
             lin_nr = y + top_line
             if top_line < lin_nr > last_line:
                 continue
 
-            # scroll
+            # scroll up
             if button == curses.BUTTON4_PRESSED:
                 if top_line > 0:
                     top_line -= 1
                 continue
 
+            # scroll down
             if button == curses.BUTTON5_PRESSED:
                 if top_line < len(new_text_lines) - window_height:
                     top_line += 1
@@ -149,18 +159,23 @@ def incurses(stdscr):
 
             positions = lines.get(lin_nr)
 
+            # no positions found
             if not positions:
                 continue
 
+            # we want to start checking from the last position
             if last_pos and last_pos.line == lin_nr:
                 positions.insert(0, last_pos)
+            else:
+                last_pos = None
+                redraw_visual_text()
 
             line_text = new_text_lines[lin_nr]
 
-            for position in positions:
+            for index, position in enumerate(positions):
                 start = position.column
                 end = position.column + position.length
-                tex = line_text[start:end]
+                pos_text = line_text[start:end]
 
                 if x >= start and x <= end:
                     last_pos = position
@@ -168,16 +183,21 @@ def incurses(stdscr):
                     stdscr.addnstr(
                         y,
                         start,
-                        tex,
+                        pos_text,
                         position.length,
                         curses.A_UNDERLINE,
                     )
                     stdscr.refresh()
                     if button == curses.BUTTON1_CLICKED:
                         global OUTPUT
-                        OUTPUT = tex
+                        OUTPUT = pos_text
                         return
                     break
+
+                if index == 0 and last_pos:
+                    last_pos = None
+                    redraw_visual_text()
+                    continue
 
 
 if __name__ == "__main__":

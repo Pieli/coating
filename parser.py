@@ -17,6 +17,13 @@ class Position:
     def __repr__(self):
         return f"Position({self.line}, {self.column}, {self.length})"
 
+    def __eq__(self, other):
+        return (
+            self.line == other.line
+            and self.column == other.column
+            and self.length == other.length
+        )
+
 
 def get_postions_for_tag(tags: iter) -> Position:
     carry, last_line = 0, 0
@@ -121,9 +128,12 @@ if __name__ == "__main__":
     print("Input text: ")
     print(text)
 
+    print("Raw text: ")
+    print(repr(text), end="\n\n")
+
     new_text = tree_transform(text)
 
-    print("Raw text: ")
+    print("new text: ")
     print(repr(new_text), end="\n\n")
 
     from pprint import pprint
