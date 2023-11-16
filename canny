@@ -73,6 +73,7 @@ def main():
         print(OUTPUT)
 
 
+# decorator for debugging
 def debug_line_dec(stdscr):
     global DEBUG
 
@@ -101,6 +102,7 @@ def incurses(stdscr):
     stdscr.scrollok(True)
     stdscr.clear()
 
+    # parse the input
     new_text = parser.tree_transform(INPUT)
     new_text_lines = new_text.splitlines(keepends=True)
     lines = parser.MAPPING
@@ -140,6 +142,7 @@ def incurses(stdscr):
             _, x, y, z, button = curses.getmouse()
             debug_line(f"x,y,button={(x, y, button)}, {last_pos=}")
 
+            # skip when mouse outside of window
             lin_nr = y + top_line
             if top_line < lin_nr > last_line:
                 continue
@@ -157,6 +160,7 @@ def incurses(stdscr):
                     redraw_visual_text()
                 continue
 
+            # positions for the current line
             positions = lines.get(lin_nr)
 
             # no positions found
@@ -177,9 +181,11 @@ def incurses(stdscr):
                 end = position.column + position.length
                 pos_text = line_text[start:end]
 
+                # check if mouse is in the position
                 if x >= start and x <= end:
                     last_pos = position
 
+                    # highlight the position
                     stdscr.addnstr(
                         y,
                         start,
@@ -194,6 +200,7 @@ def incurses(stdscr):
                         return
                     break
 
+                # last_position specific behavior
                 if index == 0 and last_pos:
                     last_pos = None
                     redraw_visual_text()
