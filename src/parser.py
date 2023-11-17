@@ -31,13 +31,16 @@ def get_postions_for_tag(tags: iter) -> Position:
     for tag in tags:
         line_nr = tag.sourceline - 1
 
+        # reset carry if we are on a new line
         if line_nr != last_line:
             last_line = line_nr
             carry = 0
 
+        # calculate prefix and carry
         tag_prefix = tag.string.index(tag.string)
         carry_new = len(str(tag)) - len(tag.string)
 
+        # create position object
         result = Position(line_nr, tag.sourcepos - tag_prefix - carry, len(tag.string))
         result.tag = tag
         result.raw_position = Position(line_nr, tag.sourcepos - 1, len(str(tag)))
@@ -48,18 +51,24 @@ def get_postions_for_tag(tags: iter) -> Position:
 
 
 def lexer(text):
+    # regex for tokenizing
     token_specification = [
         ("ELEMENT", r"\S+"),
         ("NEWLINE", r"\n"),
     ]
 
+    # join regexes with OR-operator
     tok_regex = "|".join("(?P<%s>%s)" % pair for pair in token_specification)
     line_num = 0
     line_start = 0
+
+    # iterate over all matches
     for mo in re.finditer(tok_regex, text):
         kind = mo.lastgroup
         value = mo.group()
         column = mo.start() - line_start
+
+        # newline handling
         if kind == "NEWLINE":
             line_start = mo.end()
             line_num += 1
@@ -67,10 +76,12 @@ def lexer(text):
         yield Position(line_num, column, len(value))
 
 
+#  tags from beautifulsoup object
 def get_all_tags(soup: iter) -> list:
     return [tag.name for tag in soup.find_all() if tag.name not in ("html", "body")]
 
 
+# replace tags in text only with their body
 def modify_tree(text: str, tags: iter) -> str:
     global MAPPING
     assert tags and hasattr(tags, "__iter__")
@@ -84,10 +95,12 @@ def modify_tree(text: str, tags: iter) -> str:
         assert o_tag is not None
         assert str(o_tag) in lines[line_nr]
 
+        # replace tag with its body
         lines[line_nr] = lines[line_nr].replace(str(o_tag), o_tag.string, 1)
 
         del tag.raw_position, tag.tag
 
+        # create a mapping of line_numbers to tags
         MAPPING.setdefault(line_nr, []).append(tag)
 
     return "".join(lines)
@@ -99,17 +112,18 @@ def tree_transform(text: str) -> str:
 
     # replace tabs with spaces
     text = text.replace("\t", "     ")
-    # print(repr(text))
 
     MAPPING = {}
     soup = BeautifulSoup(text, "html.parser")
 
+    # try html parsing, on failure tokenize
     tags = soup.find_all()
     if not tags:
         for token in lexer(text):
             MAPPING.setdefault(token.line, []).append(token)
         return text
 
+    # modify the text
     return modify_tree(text, tags)
 
 
