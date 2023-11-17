@@ -2,8 +2,10 @@
 
 `canny` takes lines from STDIN, allowing you to interactively select a value, which is then returned to STDOUT.
 
+or in english:  
+`canny` creates a clickable pane, based on the standard input.
 
-(TODO insert gif here)  
+![example_interaction](assets/example_interaction.gif)
 
 * canny enables interactive filters in piped commands
 * a unix-philosophy experiement
@@ -16,7 +18,7 @@
 - By default, Canny looks for HTML tags (excluding semantics) and makes tag bodies clickable.
 - If there are no tags in the text, every word will be tokenized and clickable.
 
-Here are some examples, after the installation step [here](#installation)  
+Here are some examples, after the [installation step](#installation)  
 
 This will open the selected file/directory of the current directory in vim:
 ```sh

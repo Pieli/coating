@@ -24,7 +24,7 @@ def main():
 
     # command line arguments
     arg_parser = argparse.ArgumentParser(
-        description="Pointy - a ncurses based text editor",
+        description="canny - a filter with a clickable interface",
     )
     arg_parser.add_argument(
         "-i",

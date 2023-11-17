@@ -4,3 +4,6 @@ init:
 
 build:
 	python -m build .
+
+install: build
+	pip install -e .
