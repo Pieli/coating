@@ -3,6 +3,7 @@
 `canny` takes lines from STDIN, allowing you to interactively select a value, which is then returned to STDOUT.
 
 or in english:  
+  
 `canny` creates a clickable pane, based on the standard input.
 
 ![example_interaction](assets/example_interaction.gif)
