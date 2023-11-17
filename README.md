@@ -49,7 +49,7 @@ Please report possible issues [here](https://github.com/Pieli/canny/issues).
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [GPLv3 License](LICENSE).
 
 ~ 🦝
 
