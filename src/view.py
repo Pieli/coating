@@ -23,22 +23,22 @@ def main():
     global DEBUG
 
     # command line arguments
-    parser = argparse.ArgumentParser(
+    arg_parser = argparse.ArgumentParser(
         description="Pointy - a ncurses based text editor",
     )
-    parser.add_argument(
+    arg_parser.add_argument(
         "-i",
         "--input",
         type=str,
         help="input file",
     )
-    parser.add_argument(
+    arg_parser.add_argument(
         "--debug",
         action="store_true",
         help="debug mode",
     )
 
-    args = parser.parse_args()
+    args = arg_parser.parse_args()
 
     try:
         if args.debug:
