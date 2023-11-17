@@ -1,0 +1,43 @@
+[project]
+name = "canny"
+version = "0.0.1"
+authors = [
+  { name="Pieli", email="pieli.dev@gmail.com" },
+]
+description = "A filter with an pointer interface 🦝"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: System Administrators",
+
+    "Topic :: Utilities",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+
+dependencies = [
+  beautifulsoup4==4.12.2,
+  bs4==0.0.1,
+  lxml==4.9.3,
+  soupsieve==2.5,
+]
+
+keywords = ["vim", "bash", "cli", "unix", "rice", "tui", "hci", "interaction", "unix-philosophy", "canny"]
+
+[project.scripts]
+cosicosa-cli = "canny.view:main"
+
+
+[project.urls]
+"Homepage" = "https://github.com/Pieli/canny"
+"Bug Tracker" = "https://github.com/Pieli/canny/issues"
+
+
+
