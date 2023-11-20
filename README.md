@@ -11,7 +11,7 @@ or in english:
 * canny enables interactive filters in piped commands
 * a unix-philosophy experiement
 * brings the mouse to the cli :)
-* a [fzf](https://github.com/junegunn/fzf) inspired tool
+* a [fzf-inspired](https://github.com/junegunn/fzf) tool
 
 
 ## Usage

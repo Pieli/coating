@@ -1,3 +1,0 @@
-import view
-
-view.main()

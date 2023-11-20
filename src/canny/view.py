@@ -6,7 +6,7 @@ import argparse
 import curses
 from curses import wrapper
 
-import parser
+import canny.parser as parser
 import itertools
 
 
