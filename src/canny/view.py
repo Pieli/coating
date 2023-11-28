@@ -13,9 +13,7 @@ import canny.parser as parser
 
 
 # ubuntu
-# - check if ncurses-term (apt) is needed
-# - initial ungetmouse() call
-# - check if additional parameters are needed
+# - stdin check
 # - check out scroll
 
 
@@ -146,9 +144,6 @@ def incurses(stdscr):
 
     logging.debug(f"{window_height=}")
 
-    # for ubuntu (not changing the bstate on movement)
-    curses.ungetmouse(curses.KEY_MOUSE, 0, 0, 0, curses.BUTTON_ALT)
-
     last_pos = None
 
     # update the last line based on the top line
@@ -194,8 +189,6 @@ def incurses(stdscr):
                     top_line -= 1
                     last_line = update_lastline(top_line)
                     redraw_visual_text()
-                    # for ubuntu (not changing the bstate on movement)
-                    # curses.ungetmouse(curses.KEY_MOUSE, 0, 0, 0, curses.BUTTON_ALT)
                 continue
 
             # scroll down
@@ -204,8 +197,6 @@ def incurses(stdscr):
                     top_line += 1
                     last_line = update_lastline(top_line)
                     redraw_visual_text()
-                    # for ubuntu (not changing the bstate on movement)
-                    # curses.ungetmouse(curses.KEY_MOUSE, 0, 0, 0, curses.BUTTON_ALT)
                 continue
 
             # positions for the current line
