@@ -17,7 +17,7 @@ import canny.parser as parser
 # - check out scroll
 
 
-# Mouse position: run with TERM=xterm-1003
+# to capture mouse position
 os.environ["TERM"] = "xterm-1003"
 
 INPUT = ""
@@ -83,7 +83,16 @@ def main():
         stdout = os.dup(sys.stdout.fileno())
         os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
 
-        wrapper(incurses)
+        try:
+            wrapper(incurses)
+        except curses.error as e:
+            if str(e) == "setupterm: could not find terminal":
+                print("Error: ", e, end="\n\n")
+                print("Check if xterm-1003 is installed (present in terminfo dirs)")
+                print("\tapt install ncurses-term  (ubuntu)\n")
+            else:
+                print(repr(e))
+            exit(1)
     except KeyboardInterrupt:
         exit(1)
 
@@ -142,8 +151,6 @@ def incurses(stdscr):
 
     redraw_visual_text()
 
-    logging.debug(f"{window_height=}")
-
     last_pos = None
 
     # update the last line based on the top line
@@ -153,8 +160,6 @@ def incurses(stdscr):
         curses.flushinp()
         key = stdscr.getch()
         last_line = update_lastline(top_line)
-
-        # logging.debug(f"{curses.keyname(key)}")
 
         if key == curses.KEY_DOWN:
             if top_line < len(new_text_lines) - window_height:
@@ -181,7 +186,7 @@ def incurses(stdscr):
             if top_line < lin_nr > last_line:
                 continue
 
-            logging.debug(f"lin_nr={lin_nr}, top_line={top_line}, y={y}, {last_line=}")
+            # logging.debug(f"lin_nr={lin_nr}, top_line={top_line}, y={y}, {last_line=}")
 
             # scroll up
             if button == curses.BUTTON4_PRESSED:
