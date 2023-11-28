@@ -4,19 +4,12 @@ import os
 import sys
 import argparse
 import curses
-from curses import wrapper
 
 import logging
-import itertools
+from curses import wrapper
 
 import canny.parser as parser
-
-
-# ubuntu
-# - check if ncurses-term (apt) is needed
-# - initial ungetmouse() call
-# - check if additional parameters are needed
-# - check out scroll
+import itertools
 
 
 # Mouse position: run with TERM=xterm-1003
@@ -27,6 +20,7 @@ OUTPUT = None
 DEBUG = False
 
 logging.basicConfig(filename="some.log", encoding="utf-8", level=logging.DEBUG)
+logging.debug(f"TERM={os.getenv('TERM')}")
 
 
 def read_ls():
@@ -112,8 +106,11 @@ def incurses(stdscr):
     global OUTPUT
     global DEBUG
 
+    # curses.intrflush(False)
     stdscr.keypad(True)
-    curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+    bla = curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+    # bla = curses.mousemask(-1)
+    logging.debug(f"{bla[0]}")
     curses.mouseinterval(0)
 
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
@@ -122,61 +119,61 @@ def incurses(stdscr):
     debug_line = debug_line_dec(stdscr)
 
     # hide cursor
+
     curses.curs_set(0)
     stdscr.scrollok(True)
-    stdscr.clear()
+    # stdscr.clear()
 
     # parse the input
     new_text = parser.tree_transform(INPUT)
     new_text_lines = new_text.splitlines(keepends=True)
     lines = parser.MAPPING
+    logging.debug(f"the mapping: {lines}")
 
     wh, window_width = stdscr.getmaxyx()
-    window_height = wh - 2 if DEBUG else wh - 1
+    window_height = wh - 1 if DEBUG else wh
 
     top_line = 0
-    last_line = top_line + window_height - 1
+    last_line = top_line + window_height
 
     # kinda hacky
     def redraw_visual_text():
-        stdscr.addstr(0, 0, "".join(new_text_lines[top_line : (last_line + 1)]))
+        stdscr.addstr(0, 0, "".join(new_text_lines[top_line:last_line]))
+        # for line in new_text_lines[top_line:last_line]:
+        #   stdscr.addstr(line)
         stdscr.refresh()
 
     redraw_visual_text()
 
-    logging.debug(f"{window_height=}")
-
-    # for ubuntu (not changing the bstate on movement)
+    # curses.ungetmouse(curses.KEY_MOUSE,0,0,0, curses.BUTTON5_CLICKED)
     curses.ungetmouse(curses.KEY_MOUSE, 0, 0, 0, curses.BUTTON_ALT)
 
     last_pos = None
 
-    # update the last line based on the top line
-    update_lastline = lambda top: min(top + window_height - 1, len(new_text_lines) - 1)
-
+    # curses.flushinp()
     while True:
         curses.flushinp()
         key = stdscr.getch()
-        last_line = update_lastline(top_line)
+        last_line = min(top_line + window_height, len(new_text_lines))
 
-        # logging.debug(f"{curses.keyname(key)}")
+        logging.debug(f"{curses.keyname(key)}")
 
         if key == curses.KEY_DOWN:
             if top_line < len(new_text_lines) - window_height:
                 top_line += 1
-                last_line = update_lastline(top_line)
                 redraw_visual_text()
             continue
         elif key == curses.KEY_UP:
             if top_line > 0:
                 top_line -= 1
-                last_line = update_lastline(top_line)
                 redraw_visual_text()
             continue
         elif key == ord("q"):
-            break
-        elif key == curses.KEY_MOUSE:
+            return
+
+        if key == curses.KEY_MOUSE:
             _, x, y, z, button = curses.getmouse()
+            # debug_line(f"x,y,button={(x, y, button)}, {last_pos=}")
             logging.debug(
                 f"x,y,button={(x, y, button)}, {last_pos=}, {curses.keyname(button)}"
             )
@@ -186,26 +183,18 @@ def incurses(stdscr):
             if top_line < lin_nr > last_line:
                 continue
 
-            logging.debug(f"lin_nr={lin_nr}, top_line={top_line}, y={y}, {last_line=}")
-
             # scroll up
-            if button == curses.BUTTON4_PRESSED:
+            if button == curses.BUTTON4_CLICKED:
                 if top_line > 0:
                     top_line -= 1
-                    last_line = update_lastline(top_line)
                     redraw_visual_text()
-                    # for ubuntu (not changing the bstate on movement)
-                    # curses.ungetmouse(curses.KEY_MOUSE, 0, 0, 0, curses.BUTTON_ALT)
                 continue
 
             # scroll down
-            if button == curses.BUTTON5_PRESSED:
+            if button == curses.BUTTON5_CLICKED:
                 if top_line < len(new_text_lines) - window_height:
                     top_line += 1
-                    last_line = update_lastline(top_line)
                     redraw_visual_text()
-                    # for ubuntu (not changing the bstate on movement)
-                    # curses.ungetmouse(curses.KEY_MOUSE, 0, 0, 0, curses.BUTTON_ALT)
                 continue
 
             # positions for the current line
@@ -213,8 +202,9 @@ def incurses(stdscr):
             if not optional:
                 continue
 
-            # copy to prevent changing the original
             positions = optional.copy()
+            logging.debug(f"{optional=}")
+            logging.debug(f"len ({positions and len(positions)}) -> {positions=}")
 
             # we want to start checking from the last position
             if last_pos and last_pos.line == lin_nr:
@@ -254,8 +244,6 @@ def incurses(stdscr):
                     last_pos = None
                     redraw_visual_text()
                     continue
-        else:
-            pass
 
 
 if __name__ == "__main__":
