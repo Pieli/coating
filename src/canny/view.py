@@ -13,7 +13,8 @@ import canny.parser as parser
 
 
 # ubuntu
-# - stdin check
+# - log to file specified by user
+# - stdin check if it's a pipe
 # - check out scroll
 
 
@@ -57,18 +58,22 @@ def main():
 
     args = arg_parser.parse_args()
 
+    # check if it is a pipe
+    is_pipe = not os.isatty(sys.stdin.fileno())
+
     try:
         if args.debug:
             DEBUG = True
 
-        if not args.input:
-            INPUT = read_ls()
-
-        elif not args.input or args.input.strip() == "-":
+        if is_pipe or args.input == "-":
             INPUT = sys.stdin.read()
 
+            # redirect stdin to /dev/tty
             with open("/dev/tty") as f:
                 os.dup2(f.fileno(), 0)
+
+        elif not args.input and not is_pipe:
+            INPUT = read_ls()
 
         elif args.input:
             if not os.path.isfile(args.input):
@@ -93,6 +98,10 @@ def main():
             else:
                 print(repr(e))
             exit(1)
+        except Exception as e:
+            print("Error: ", e)
+            exit(1)
+
     except KeyboardInterrupt:
         exit(1)
 
