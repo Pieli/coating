@@ -111,14 +111,13 @@ def main():
 
 
 # decorator for debugging
-def debug_line_dec(stdscr):
+def debug_line_dec(logging):
     global DEBUG
 
-    def wrapper(text):
+    def wrapper(args):
         if not DEBUG:
             return
-        stdscr.addstr(curses.LINES - 1, 0, text)
-        stdscr.refresh()
+        logging.debug(args)
 
     return wrapper
 
@@ -135,7 +134,7 @@ def incurses(stdscr):
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.use_default_colors()
 
-    debug_line = debug_line_dec(stdscr)
+    log = debug_line_dec(logging)
 
     # hide cursor
     curses.curs_set(0)
@@ -186,16 +185,14 @@ def incurses(stdscr):
             break
         elif key == curses.KEY_MOUSE:
             _, x, y, z, button = curses.getmouse()
-            logging.debug(
-                f"x,y,button={(x, y, button)}, {last_pos=}, {curses.keyname(button)}"
-            )
+            log(f"x,y,button={(x, y, button)}, {last_pos=}, {curses.keyname(button)}")
 
             # skip when mouse outside of window
             lin_nr = y + top_line
             if top_line < lin_nr > last_line:
                 continue
 
-            # logging.debug(f"lin_nr={lin_nr}, top_line={top_line}, y={y}, {last_line=}")
+            # log(f"lin_nr={lin_nr}, top_line={top_line}, y={y}, {last_line=}")
 
             # scroll up
             if button == curses.BUTTON4_PRESSED:
