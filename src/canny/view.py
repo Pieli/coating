@@ -109,6 +109,10 @@ def main():
                 print(repr(e))
             exit(1)
         except Exception as e:
+            import traceback
+
+            DEBUG and traceback.print_exc()
+
             print("Error: ", e)
             exit(1)
 
@@ -153,6 +157,7 @@ def incurses(stdscr):
     stdscr.clear()
 
     # parse the input
+    log(repr(INPUT))
     new_text = parser.tree_transform(INPUT, html=USE_TAGS)
     new_text_lines = new_text.splitlines(keepends=True)
     lines = parser.MAPPING

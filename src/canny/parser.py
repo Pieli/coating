@@ -1,6 +1,7 @@
 #!/usr/env python3
 
 import re
+import bs4
 from bs4 import BeautifulSoup
 
 MAPPING = {}
@@ -29,6 +30,9 @@ def get_postions_for_tag(tags: iter) -> Position:
     carry, last_line = 0, 0
 
     for tag in tags:
+        if not isinstance(tag, bs4.element.Tag):
+            continue
+
         line_nr = tag.sourceline - 1
 
         # reset carry if we are on a new line
@@ -119,9 +123,9 @@ def tree_transform(text: str, html=False) -> str:
     if html:
         soup = BeautifulSoup(text, "html.parser")
         # try html parsing, on failure tokenize
-        tags = soup.find_all()
+        tags = soup.contents
 
-    if not tags:
+    if not tags or all(isinstance(tag, str) for tag in tags):
         for token in lexer(text):
             MAPPING.setdefault(token.line, []).append(token)
         return text
