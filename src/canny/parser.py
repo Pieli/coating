@@ -106,7 +106,7 @@ def modify_tree(text: str, tags: iter) -> str:
     return "".join(lines)
 
 
-def tree_transform(text: str) -> str:
+def tree_transform(text: str, html=False) -> str:
     global MAPPING
     assert text and type(text) is str
 
@@ -114,10 +114,13 @@ def tree_transform(text: str) -> str:
     text = text.replace("\t", "     ")
 
     MAPPING = {}
-    soup = BeautifulSoup(text, "html.parser")
 
-    # try html parsing, on failure tokenize
-    tags = soup.find_all()
+    tags = []
+    if html:
+        soup = BeautifulSoup(text, "html.parser")
+        # try html parsing, on failure tokenize
+        tags = soup.find_all()
+
     if not tags:
         for token in lexer(text):
             MAPPING.setdefault(token.line, []).append(token)
@@ -145,7 +148,7 @@ if __name__ == "__main__":
     print("Raw text: ")
     print(repr(text), end="\n\n")
 
-    new_text = tree_transform(text)
+    new_text = tree_transform(text, html=True)
 
     print("new text: ")
     print(repr(new_text), end="\n\n")

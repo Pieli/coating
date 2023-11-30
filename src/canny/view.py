@@ -24,6 +24,7 @@ os.environ["TERM"] = "xterm-1003"
 INPUT = ""
 OUTPUT = None
 DEBUG = False
+USE_TAGS = False
 
 logging.basicConfig(filename="some.log", encoding="utf-8", level=logging.DEBUG)
 
@@ -39,6 +40,7 @@ def read_ls():
 def main():
     global INPUT
     global DEBUG
+    global USE_TAGS
 
     # command line arguments
     arg_parser = argparse.ArgumentParser(
@@ -55,6 +57,11 @@ def main():
         action="store_true",
         help="debug mode",
     )
+    arg_parser.add_argument(
+        "--tags",
+        action="store_true",
+        help="parse html tags",
+    )
 
     args = arg_parser.parse_args()
 
@@ -62,6 +69,9 @@ def main():
     is_pipe = not os.isatty(sys.stdin.fileno())
 
     try:
+        if args.tags:
+            USE_TAGS = True
+
         if args.debug:
             DEBUG = True
 
@@ -126,6 +136,7 @@ def incurses(stdscr):
     global INPUT
     global OUTPUT
     global DEBUG
+    global USE_TAGS
 
     stdscr.keypad(True)
     curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
@@ -142,7 +153,7 @@ def incurses(stdscr):
     stdscr.clear()
 
     # parse the input
-    new_text = parser.tree_transform(INPUT)
+    new_text = parser.tree_transform(INPUT, html=USE_TAGS)
     new_text_lines = new_text.splitlines(keepends=True)
     lines = parser.MAPPING
 
