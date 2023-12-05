@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 
+"""
+A filter with an pointer interface 🦝
+"""
+
+# pylint: disable=global-statement, missing-function-docstring, too-many-statements, too-many-branches, too-many-locals
+
 import os
 import sys
 import argparse
+
+import logging
+import traceback
+import subprocess
+
 import curses
 from curses import wrapper
 
-import logging
-import itertools
-
-import canny.parser as parser
+from canny import parser
 
 # to capture mouse position
 os.environ["TERM"] = "xterm-1003"
@@ -21,11 +29,9 @@ USE_TAGS = False
 
 
 def read_ls():
-    import subprocess
-
-    proc = subprocess.Popen(["ls"], stdout=subprocess.PIPE)
-    proc.wait()
-    return proc.stdout.read().decode("utf-8")
+    with subprocess.Popen(["ls"], stdout=subprocess.PIPE) as proc:
+        output = proc.stdout.read().decode("utf-8")
+    return output
 
 
 def main():
@@ -73,7 +79,7 @@ def main():
             INPUT = sys.stdin.read()
 
             # redirect stdin to /dev/tty
-            with open("/dev/tty") as f:
+            with open("/dev/tty", encoding="utf-8") as f:
                 os.dup2(f.fileno(), 0)
 
         elif not args.input and not is_pipe:
@@ -82,9 +88,9 @@ def main():
         elif args.input:
             if not os.path.isfile(args.input):
                 print(f"File '{args.input}' does not exist")
-                exit(1)
+                sys.exit(1)
 
-            with open(args.input, "r") as f:
+            with open(args.input, "r", encoding="utf-8") as f:
                 INPUT = f.read()
         else:
             pass
@@ -101,17 +107,16 @@ def main():
                 print("\tapt install ncurses-term  (ubuntu)\n")
             else:
                 print(repr(e))
-            exit(1)
+            sys.exit(1)
         except Exception as e:
-            import traceback
-
-            DEBUG and traceback.print_exc()
+            if DEBUG:
+                traceback.print_exc()
 
             print("Error: ", e)
-            exit(1)
+            sys.exit(1)
 
     except KeyboardInterrupt:
-        exit(1)
+        sys.exit(1)
 
     if OUTPUT:
         os.dup2(stdout, sys.stdout.fileno())
@@ -119,22 +124,19 @@ def main():
 
 
 # decorator for debugging
-def debug_line_dec(logging):
-    global DEBUG
+def debug_line_dec(log):
+    # global DEBUG
 
-    def wrapper(args):
+    def debug_wrapper(args):
         if not DEBUG:
             return
-        logging.debug(args)
+        log.debug(args)
 
-    return wrapper
+    return debug_wrapper
 
 
 def incurses(stdscr):
-    global INPUT
     global OUTPUT
-    global DEBUG
-    global USE_TAGS
 
     stdscr.keypad(True)
     curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
@@ -155,7 +157,7 @@ def incurses(stdscr):
     new_text_lines = new_text.splitlines(keepends=True)
     lines = parser.MAPPING
 
-    wh, window_width = stdscr.getmaxyx()
+    wh, _ = stdscr.getmaxyx()
     window_height = wh - 2 if DEBUG else wh - 1
 
     top_line = 0
@@ -171,7 +173,8 @@ def incurses(stdscr):
     last_pos = None
 
     # update the last line based on the top line
-    update_lastline = lambda top: min(top + window_height - 1, len(new_text_lines) - 1)
+    def update_lastline(top):
+        return min(top + window_height - 1, len(new_text_lines) - 1)
 
     while True:
         curses.flushinp()
@@ -184,16 +187,16 @@ def incurses(stdscr):
                 last_line = update_lastline(top_line)
                 redraw_visual_text()
             continue
-        elif key == curses.KEY_UP:
+        if key == curses.KEY_UP:
             if top_line > 0:
                 top_line -= 1
                 last_line = update_lastline(top_line)
                 redraw_visual_text()
             continue
-        elif key == ord("q"):
+        if key == ord("q"):
             break
-        elif key == curses.KEY_MOUSE:
-            _, x, y, z, button = curses.getmouse()
+        if key == curses.KEY_MOUSE:
+            _, x, y, _, button = curses.getmouse()
             log(f"x,y,button={(x, y, button)}, {last_pos=}, {curses.keyname(button)}")
 
             # skip when mouse outside of window
@@ -220,6 +223,8 @@ def incurses(stdscr):
             # positions for the current line
             optional = lines.get(lin_nr)
             if not optional:
+                last_pos = None
+                redraw_visual_text()
                 continue
 
             # copy to prevent changing the original
@@ -240,7 +245,7 @@ def incurses(stdscr):
                 pos_text = line_text[start:end]
 
                 # check if mouse is in the position
-                if x >= start and x <= end:
+                if start <= x <= end:
                     last_pos = position
 
                     # highlight the position
