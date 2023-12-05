@@ -1,6 +1,8 @@
-# Canny
+<p align="center">
+  <img src="https://github.com/Pieli/canny/assets/canny_logo.png" />
+</p>
 
-`canny` takes lines from STDIN, allowing you to interactively select a value, which is then returned to STDOUT.
+`canny` reads lines from STDIN, allowing you to interactively select a value, which is then returned to STDOUT.
 
 or in english:  
   
@@ -13,12 +15,12 @@ or in english:
 * brings the mouse to the cli :)
 * a [fzf-inspired](https://github.com/junegunn/fzf) tool
 
+**But, what does it do?**  
+- Every non-white space becomes a token
+- Every token will be possible element for selection
+- After a selection, the token will be returned through standard output
 
 ## Usage
-**But, what does it do?**  
-- By default, Canny looks for HTML tags (excluding semantics) and makes tag bodies clickable.
-- If there are no tags in the text, every word will be tokenized and clickable.
-
 Here are some examples, after the [installation step](#installation)  
 
 This will open the selected file/directory of the current directory in vim:
@@ -33,6 +35,15 @@ ls -C | canny | xargs xdg-open
 This opens the selected file with it's standard application.
 
 For more ways to use `canny` check out the `examples` directory.  
+
+### Html Parser
+- when run with the `--tags` flag, canny will look for HTML tags (excluding semantics) and makes tag bodies clickable.
+- this functiion allows for a predefinition of clickable elements, in contrast to the default case, where every non-whitespace character is clickable
+- if the tags are nested, only the highest level of tags is clickable
+- in the case ther are no tags in the text, every word will be tokenized and clickable.
+
+insert html example here
+
 
 ## Installation
 You can install `canny` from the PyPI repositories using the following command:

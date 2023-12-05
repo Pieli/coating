@@ -11,13 +11,6 @@ import itertools
 
 import canny.parser as parser
 
-
-# ubuntu
-# - log to file specified by user
-# - stdin check if it's a pipe
-# - check out scroll
-
-
 # to capture mouse position
 os.environ["TERM"] = "xterm-1003"
 
@@ -25,8 +18,6 @@ INPUT = ""
 OUTPUT = None
 DEBUG = False
 USE_TAGS = False
-
-logging.basicConfig(filename="some.log", encoding="utf-8", level=logging.DEBUG)
 
 
 def read_ls():
@@ -74,6 +65,9 @@ def main():
 
         if args.debug:
             DEBUG = True
+            logging.basicConfig(
+                filename="some.log", encoding="utf-8", level=logging.DEBUG
+            )
 
         if is_pipe or args.input == "-":
             INPUT = sys.stdin.read()
@@ -157,7 +151,6 @@ def incurses(stdscr):
     stdscr.clear()
 
     # parse the input
-    log(repr(INPUT))
     new_text = parser.tree_transform(INPUT, html=USE_TAGS)
     new_text_lines = new_text.splitlines(keepends=True)
     lines = parser.MAPPING
@@ -207,8 +200,6 @@ def incurses(stdscr):
             lin_nr = y + top_line
             if top_line < lin_nr > last_line:
                 continue
-
-            # log(f"lin_nr={lin_nr}, top_line={top_line}, y={y}, {last_line=}")
 
             # scroll up
             if button == curses.BUTTON4_PRESSED:
