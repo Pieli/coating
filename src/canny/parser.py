@@ -1,5 +1,9 @@
 #!/usr/env python3
 
+"""
+This module contains the parser for canny.
+"""
+
 import re
 import bs4
 from bs4 import BeautifulSoup
@@ -8,6 +12,10 @@ MAPPING = {}
 
 
 class Position:
+    """
+    Position object for storing the position of a token in the text
+    """
+
     def __init__(self, line, column, length):
         self.line = line
         self.column = column
@@ -27,6 +35,9 @@ class Position:
 
 
 def get_postions_for_tag(tags: iter) -> Position:
+    """
+    Generator for Position objects for from the tags contained in the text.
+    """
     carry, last_line = 0, 0
 
     for tag in tags:
@@ -55,6 +66,9 @@ def get_postions_for_tag(tags: iter) -> Position:
 
 
 def lexer(text):
+    """
+    Tokenizer - Tokens for newlines and non-whitespace elements
+    """
     # regex for tokenizing
     token_specification = [
         ("ELEMENT", r"\S+"),
@@ -80,13 +94,17 @@ def lexer(text):
         yield Position(line_num, column, len(value))
 
 
-#  tags from beautifulsoup object
 def get_all_tags(soup: iter) -> list:
+    """
+    Get all tags from a beautifulsoup object
+    """
     return [tag.name for tag in soup.find_all() if tag.name not in ("html", "body")]
 
 
-# replace tags in text only with their body
 def modify_tree(text: str, tags: iter) -> str:
+    """
+    Replace tags in text only with their body
+    """
     global MAPPING
     assert tags and hasattr(tags, "__iter__")
 
@@ -111,8 +129,11 @@ def modify_tree(text: str, tags: iter) -> str:
 
 
 def tree_transform(text: str, html=False) -> str:
+    """
+    Transform the text by replacing tags with their body and generate a mapping
+    """
     global MAPPING
-    assert text and type(text) is str
+    assert text and isinstance(text, str)
 
     # replace tabs with spaces
     text = text.replace("\t", "     ")
@@ -140,11 +161,11 @@ if __name__ == "__main__":
 
         text = sys.stdin.read()
     except KeyboardInterrupt:
-        exit()
+        sys.exit(1)
 
     if not text:
         print("No input")
-        exit()
+        sys.exit(1)
 
     print("Input text: ")
     print(text)

@@ -42,7 +42,8 @@ For more ways to use `canny` check out the `examples` directory.
 - if the tags are nested, only the highest level of tags is clickable
 - in the case ther are no tags in the text, every word will be tokenized and clickable.
 
-insert html example here
+(( insert html example here ))
+Here is an example input (from the examples directory):
 
 
 ## Installation
