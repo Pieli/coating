@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/Pieli/canny/blob/main/assets/canny_logo.png" />
+  <img src="https://github.com/Pieli/canny/blob/main/assets/canny_logo_small.png" />
 </p>
 
 `canny` reads lines from STDIN, allowing you to interactively select a value, which is then returned to STDOUT.
