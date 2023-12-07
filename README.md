@@ -57,6 +57,12 @@ or check the realease page for a manual installation.
 only tested / written for linux
 
 ## Issues
+
+***NOTE***
+This tool currently supports python3.10 and upwards
+
+On version with a python version lower than 3.10 the curses.BUTTON5 constant is not supported.
+
 Please report possible issues [here](https://github.com/Pieli/canny/issues). 
 
 ## License

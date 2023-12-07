@@ -4,6 +4,8 @@ __pycache__
 dist
 *.egg-info
 
+.python-version
+
 # virtual environment
 venv
 
