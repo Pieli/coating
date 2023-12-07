@@ -4,7 +4,7 @@
 A filter with an pointer interface 🦝
 """
 
-# pylint: disable=global-statement, missing-function-docstring, too-many-statements, too-many-branches, too-many-locals
+# pylint: disable=global-statement, missing-function-docstring, too-many-statements, too-many-branches, too-many-locals, broad-exception-caught
 
 import os
 import sys
@@ -153,9 +153,10 @@ def incurses(stdscr):
     stdscr.clear()
 
     # parse the input
-    new_text = parser.tree_transform(INPUT, html=USE_TAGS)
+    pars = parser.Parser(INPUT, html=USE_TAGS)
+    new_text = pars.tree_transform()
     new_text_lines = new_text.splitlines(keepends=True)
-    lines = parser.MAPPING
+    lines = pars.get_mapping()
 
     wh, _ = stdscr.getmaxyx()
     window_height = wh - 2 if DEBUG else wh - 1

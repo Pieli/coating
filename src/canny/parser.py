@@ -8,8 +8,6 @@ import re
 import bs4
 from bs4 import BeautifulSoup
 
-MAPPING = {}
-
 
 class Position:
     """
@@ -34,151 +32,157 @@ class Position:
         )
 
 
-def get_postions_for_tag(tags: iter) -> Position:
+class Parser:
     """
-    Generator for Position objects for from the tags contained in the text.
+    Generates a mapping of line numbers to Position objects for a given text.
     """
-    carry, last_line = 0, 0
 
-    for tag in tags:
-        if not isinstance(tag, bs4.element.Tag):
-            continue
+    def __init__(self, text: str, html=False):
+        assert text and isinstance(text, str)
+        assert isinstance(html, bool)
 
-        line_nr = tag.sourceline - 1
+        # replace tabs with spaces
+        self.text = text.replace("\t", "     ")
 
-        # reset carry if we are on a new line
-        if line_nr != last_line:
-            last_line = line_nr
-            carry = 0
+        self.html = html
+        self.__mapping = {}
 
-        # calculate prefix and carry
-        tag_prefix = tag.string.index(tag.string)
-        carry_new = len(str(tag)) - len(tag.string)
+    def get_mapping(self):
+        """Getter for the mapping"""
+        return self.__mapping
 
-        # create position object
-        result = Position(line_nr, tag.sourcepos - tag_prefix - carry, len(tag.string))
-        result.tag = tag
-        result.raw_position = Position(line_nr, tag.sourcepos - 1, len(str(tag)))
+    def get_postions_for_tag(self, tags: iter) -> Position:
+        """
+        Generator for Position objects for from the tags contained in the text.
+        """
+        carry, last_line = 0, 0
 
-        carry += carry_new
+        for tag in tags:
+            if not isinstance(tag, bs4.element.Tag):
+                continue
 
-        yield result
+            line_nr = tag.sourceline - 1
 
+            # reset carry if we are on a new line
+            if line_nr != last_line:
+                last_line = line_nr
+                carry = 0
 
-def lexer(text):
-    """
-    Tokenizer - Tokens for newlines and non-whitespace elements
-    """
-    # regex for tokenizing
-    token_specification = [
-        ("ELEMENT", r"\S+"),
-        ("NEWLINE", r"\n"),
-    ]
+            # calculate prefix and carry
+            tag_prefix = tag.string.index(tag.string)
+            carry_new = len(str(tag)) - len(tag.string)
 
-    # join regexes with OR-operator
-    tok_regex = "|".join("(?P<%s>%s)" % pair for pair in token_specification)
-    line_num = 0
-    line_start = 0
+            # create position object
+            result = Position(
+                line_nr, tag.sourcepos - tag_prefix - carry, len(tag.string)
+            )
+            result.tag = tag
+            result.raw_position = Position(line_nr, tag.sourcepos - 1, len(str(tag)))
 
-    # iterate over all matches
-    for mo in re.finditer(tok_regex, text):
-        kind = mo.lastgroup
-        value = mo.group()
-        column = mo.start() - line_start
+            carry += carry_new
 
-        # newline handling
-        if kind == "NEWLINE":
-            line_start = mo.end()
-            line_num += 1
-            continue
-        yield Position(line_num, column, len(value))
+            yield result
 
+    def lexer(self):
+        """
+        Tokenizer - Tokens for newlines and non-whitespace elements
+        """
+        # regex for tokenizing
+        token_specification = [
+            ("ELEMENT", r"\S+"),
+            ("NEWLINE", r"\n"),
+        ]
 
-def get_all_tags(soup: iter) -> list:
-    """
-    Get all tags from a beautifulsoup object
-    """
-    return [tag.name for tag in soup.find_all() if tag.name not in ("html", "body")]
+        # join regexes with OR-operator
+        tok_regex = "|".join(
+            f"(?P<{tok_name}>{tok_str})" for tok_name, tok_str in token_specification
+        )
+        line_num = 0
+        line_start = 0
 
+        # iterate over all matches
+        for mo in re.finditer(tok_regex, self.text):
+            kind = mo.lastgroup
+            value = mo.group()
+            column = mo.start() - line_start
 
-def modify_tree(text: str, tags: iter) -> str:
-    """
-    Replace tags in text only with their body
-    """
-    global MAPPING
-    assert tags and hasattr(tags, "__iter__")
+            # newline handling
+            if kind == "NEWLINE":
+                line_start = mo.end()
+                line_num += 1
+                continue
+            yield Position(line_num, column, len(value))
 
-    lines = text.splitlines(keepends=True)
+    def modify_tree(self, tags: iter) -> str:
+        """
+        Replace tags in text only with their body
+        """
+        assert tags and hasattr(tags, "__iter__")
 
-    for tag in get_postions_for_tag(tags):
-        line_nr = tag.raw_position.line
-        o_tag = tag.tag
+        lines = self.text.splitlines(keepends=True)
 
-        assert o_tag is not None
-        assert str(o_tag) in lines[line_nr]
+        for tag in self.get_postions_for_tag(tags):
+            line_nr = tag.raw_position.line
+            o_tag = tag.tag
 
-        # replace tag with its body
-        lines[line_nr] = lines[line_nr].replace(str(o_tag), o_tag.string, 1)
+            assert o_tag is not None
+            assert str(o_tag) in lines[line_nr]
 
-        del tag.raw_position, tag.tag
+            # replace tag with its body
+            lines[line_nr] = lines[line_nr].replace(str(o_tag), o_tag.string, 1)
 
-        # create a mapping of line_numbers to tags
-        MAPPING.setdefault(line_nr, []).append(tag)
+            del tag.raw_position, tag.tag
 
-    return "".join(lines)
+            # create a mapping of line_numbers to tags
+            self.__mapping.setdefault(line_nr, []).append(tag)
 
+        return "".join(lines)
 
-def tree_transform(text: str, html=False) -> str:
-    """
-    Transform the text by replacing tags with their body and generate a mapping
-    """
-    global MAPPING
-    assert text and isinstance(text, str)
+    def tree_transform(self) -> str:
+        """
+        Transform the text by replacing tags with their body and generate a mapping
+        """
 
-    # replace tabs with spaces
-    text = text.replace("\t", "     ")
+        tags = []
+        if self.html:
+            soup = BeautifulSoup(self.text, "html.parser")
+            # try html parsing, on failure tokenize
+            tags = soup.contents
 
-    MAPPING = {}
+        if not tags or all(isinstance(tag, str) for tag in tags):
+            for token in self.lexer():
+                self.__mapping.setdefault(token.line, []).append(token)
+            return self.text
 
-    tags = []
-    if html:
-        soup = BeautifulSoup(text, "html.parser")
-        # try html parsing, on failure tokenize
-        tags = soup.contents
-
-    if not tags or all(isinstance(tag, str) for tag in tags):
-        for token in lexer(text):
-            MAPPING.setdefault(token.line, []).append(token)
-        return text
-
-    # modify the text
-    return modify_tree(text, tags)
+        # modify the text
+        return self.modify_tree(tags)
 
 
 if __name__ == "__main__":
     try:
         import sys
 
-        text = sys.stdin.read()
+        text_input = sys.stdin.read()
     except KeyboardInterrupt:
         sys.exit(1)
 
-    if not text:
+    if not text_input:
         print("No input")
         sys.exit(1)
 
     print("Input text: ")
-    print(text)
+    print(text_input)
 
     print("Raw text: ")
-    print(repr(text), end="\n\n")
+    print(repr(text_input), end="\n\n")
 
-    new_text = tree_transform(text, html=True)
+    parser = Parser(text_input, html=True)
+    new_text = parser.tree_transform()
 
     print("new text: ")
     print(repr(new_text), end="\n\n")
 
     from pprint import pprint
 
-    pprint(MAPPING)
+    pprint(parser.get_mapping())
     print()
