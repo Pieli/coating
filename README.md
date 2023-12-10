@@ -2,11 +2,11 @@
   <img src="https://github.com/Pieli/canny/blob/main/assets/canny_logo_small.png" />
 </p>
 
-`canny` reads lines from STDIN, allowing you to interactively select a value, which is then returned to STDOUT.
-
-or in english:  
-  
 `canny` creates a clickable pane, based on the standard input.
+
+or more precise:  
+  
+`canny` reads lines from STDIN, allowing you to interactively select a value, which is then returned to STDOUT.
 
 ![example_interaction](assets/example_interaction.gif)
 
@@ -49,9 +49,15 @@ Here is an example input (from the examples directory):
 ## Installation
 You can install `canny` from the PyPI repositories using the following command:
 ```
-pip install --user canny
+pip install canny
 ```
 or check the realease page for a manual installation.
+
+on ubuntu first install ncurses-term:
+```
+apt install ncurses-term
+```
+
 
 ***NOTE***
 only tested / written for linux
