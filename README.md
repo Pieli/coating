@@ -2,10 +2,10 @@
   <img src="https://github.com/Pieli/canny/blob/main/assets/canny_logo_small.png" />
 </p>
 <p align="center">
- <a href="https://github.com/Pieli/canny/actions/workflows/pylint.yml/badge.svg">
-    <img src="https://github.com/Pieli/canny/actions/workflows/pylint.yml">
+ <a href="https://github.com/Pieli/canny/actions/workflows/pylint.yml">
+    <img src="https://github.com/Pieli/canny/actions/workflows/pylint.yml/badge.svg">
   </a>
- <a href="https://github.com/Pieli/canny/actions/workflows/python-publish.ym">
+ <a href="https://github.com/Pieli/canny/actions/workflows/python-publish.yml">
     <img src="https://github.com/Pieli/canny/actions/workflows/python-publish.yml/badge.svg?branch=main">
   </a>
 </p>
