@@ -11,9 +11,9 @@ or more precise:
 ![example_interaction](assets/example_interaction.gif)
 
 * canny enables interactive filters in piped commands
-* a unix-philosophy experiement
+* a unix-philosophy experiment
 * brings the mouse to the cli :)
-* a [fzf-inspired](https://github.com/junegunn/fzf) tool
+* a fzf inspired tool
 
 **But, what does it do?**  
 - Every non-white space becomes a token
@@ -75,5 +75,6 @@ Please report possible issues [here](https://github.com/Pieli/canny/issues).
 
 This project is licensed under the [GPLv3 License](LICENSE).
 
-~ 🦝
+---
+Made with love by 🦝
 
