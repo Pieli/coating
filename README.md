@@ -14,6 +14,10 @@ or more precise:
 * a unix-philosophy experiment
 * brings the mouse to the cli :)
 * a fzf inspired tool
+<p align="center">
+  <img width=80% src="https://github.com/Pieli/canny/blob/main/assets/demo.gif" />
+</p>
+
 
 **But, what does it do?**  
 - Every non-white space becomes a token
@@ -42,8 +46,9 @@ For more ways to use `canny` check out the `examples` directory.
 - if the tags are nested, only the highest level of tags is clickable
 - in the case ther are no tags in the text, every word will be tokenized and clickable.
 
-(( insert html example here ))
-Here is an example input (from the examples directory):
+<p align="center">
+  <img width=70% src="https://github.com/Pieli/canny/blob/main/assets/ice-cream.gif" />
+</p>
 
 
 ## Installation
