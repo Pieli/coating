@@ -38,7 +38,7 @@ For more ways to use `canny` check out the `examples` directory.
 
 ### Html Parser
 - when run with the `--tags` flag, canny will look for HTML tags (excluding semantics) and makes tag bodies clickable.
-- this functiion allows for a predefinition of clickable elements, in contrast to the default case, where every non-whitespace character is clickable
+- this function allows for a predefinition of clickable elements, in contrast to the default case, where every non-whitespace character is clickable
 - if the tags are nested, only the highest level of tags is clickable
 - in the case ther are no tags in the text, every word will be tokenized and clickable.
 
@@ -47,6 +47,9 @@ Here is an example input (from the examples directory):
 
 
 ## Installation
+> [!Note]
+> only tested / written for linux
+
 You can install `canny` from the PyPI repositories using the following command:
 ```
 pip install canny
@@ -59,15 +62,12 @@ apt install ncurses-term
 ```
 
 
-***NOTE***
-only tested / written for linux
-
 ## Issues
 
-***NOTE***
-This tool currently supports python3.10 and upwards
+> [!Important]
+> This tool currently supports python3.10 and upwards
 
-On version with a python version lower than 3.10 the curses.BUTTON5 constant is not supported.
+On version with a python version lower than 3.10 the `curses.BUTTON5` constant is not supported.
 
 Please report possible issues [here](https://github.com/Pieli/canny/issues). 
 
@@ -76,5 +76,4 @@ Please report possible issues [here](https://github.com/Pieli/canny/issues).
 This project is licensed under the [GPLv3 License](LICENSE).
 
 ~ 🦝
-
 
