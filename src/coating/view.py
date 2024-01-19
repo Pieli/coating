@@ -17,7 +17,7 @@ import subprocess
 import curses
 from curses import wrapper
 
-from canny import parser
+from coating import parser
 
 # to capture mouse position
 os.environ["TERM"] = "xterm-1003"
@@ -41,7 +41,7 @@ def main():
 
     # command line arguments
     arg_parser = argparse.ArgumentParser(
-        description="canny - a filter with a clickable interface",
+        description="coating - a filter with a clickable interface",
     )
     arg_parser.add_argument(
         "-i",

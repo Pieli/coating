@@ -1,7 +1,7 @@
 #!/usr/env python3
 
 """
-This module contains the parser for canny.
+This module contains the parser for coating.
 """
 
 import re

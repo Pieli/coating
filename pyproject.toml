@@ -1,5 +1,5 @@
 [project]
-name = "canny"
+name = "coating"
 version = "0.0.1"
 authors = [
   { name="Pieli", email="pieli.dev@gmail.com" },
@@ -29,15 +29,15 @@ dependencies = [
   "soupsieve==2.5",
 ]
 
-keywords = ["vim", "bash", "cli", "unix", "rice", "tui", "hci", "interaction", "unix-philosophy", "canny"]
+keywords = ["vim", "bash", "cli", "unix", "rice", "tui", "hci", "interaction", "unix-philosophy"]
 
 [project.scripts]
-canny = "canny.view:main"
+coating = "coating.view:main"
 
 
 [project.urls]
-"Homepage" = "https://github.com/Pieli/canny"
-"Bug Tracker" = "https://github.com/Pieli/canny/issues"
+"Homepage" = "https://github.com/Pieli/coating"
+"Bug Tracker" = "https://github.com/Pieli/coating/issues"
 
 
 

@@ -1,4 +1,4 @@
 """Main entry point for the application."""
-from canny import view
+from coating import view
 
 view.main()
